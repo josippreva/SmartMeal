@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('recipe_id')->constrained()->onDelete('cascade');
-            $table->date('date');
+            $table->date('date')->nullable();
             $table->string('meal_type')->nullable(); // doručak, ručak, večera
             $table->timestamps();
         });

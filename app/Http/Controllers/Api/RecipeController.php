@@ -11,7 +11,7 @@ class RecipeController extends Controller
     // GET /api/recipes
     public function index(Request $request)
 {
-    $query = Recipe::query();
+    $query = Recipe::with('ingredients'); // Uvijek učitavamo sastojke
 
     // Filtriranje po kalorijama
     if ($request->has('min_calories')) {
@@ -21,30 +21,20 @@ class RecipeController extends Controller
         $query->where('calories', '<=', $request->max_calories);
     }
 
-    // Filtriranje po vrsti obroka
+    // Filtriranje po vrsti obroka (ako postoji meal_type u bazi)
     if ($request->has('meal_type')) {
-        $query->where('meal_type', $request->meal_type); 
-        // Napomena: moraš imati 'meal_type' u Recipe modelu/tablici ako želiš ovo filter
+        $query->where('meal_type', $request->meal_type);
     }
 
-    // Filtriranje po vremenu pripreme
-    if ($request->has('prep_time_max')) {
-        $query->where('prep_time', '<=', $request->prep_time_max);
-    }
-    if ($request->has('prep_time_min')) {
-        $query->where('prep_time', '>=', $request->prep_time_min);
-    }
-
-    // Filtriranje po dostupnim sastojcima (array)
+    // Filtriranje po sastojcima (ingredient_ids ili imena)
     if ($request->has('ingredients')) {
-        $ingredients = $request->ingredients; // očekuje array ili comma-separated string
+        $ingredients = $request->ingredients;
         if (is_string($ingredients)) {
             $ingredients = explode(',', $ingredients);
         }
 
-        // Ovo pretpostavlja da Recipe ima relationship ingredients()
         $query->whereHas('ingredients', function($q) use ($ingredients) {
-            $q->whereIn('name', $ingredients);
+            $q->whereIn('id', $ingredients); // koristi ID-eve za preciznije filtriranje
         });
     }
 
@@ -55,10 +45,10 @@ class RecipeController extends Controller
 
     // GET /api/recipes/{id}
     public function show($id)
-    {
-        $recipe = Recipe::findOrFail($id);
-        return response()->json($recipe);
-    }
+{
+    $recipe = Recipe::with('ingredients')->findOrFail($id);
+    return response()->json($recipe);
+}
 
     // POST /api/recipes
     public function store(Request $request)

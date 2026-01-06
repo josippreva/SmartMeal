@@ -4,12 +4,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\IngredientController;
+use App\Http\Controllers\Api\RecipeIngredientController;
+
 
 // --- Javne rute ---
 Route::get('/recipes', [RecipeController::class, 'index']);
-Route::get('/recipes/{id}', function($id) {
+
+
+/*Route::get('/recipes/{id}', function($id) {
     return \App\Models\Recipe::findOrFail($id);
 });
+
+Route::get('/recipes/{id}', function($id) {
+    return \App\Models\Recipe::with('ingredients')->findOrFail($id);
+});
+
+*/
+
+Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 
 // Auth rute
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,7 +42,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     
+
+
+    Route::put('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+
+
+    
+    Route::post('/recipes/{recipe}/ingredients', [
+    \App\Http\Controllers\Api\RecipeIngredientController::class,
+    'attach'
+
+    ]);
+
 });
+
 
 
 Route::middleware('auth:sanctum')->post('/recommendations', [\App\Http\Controllers\Api\RecommendationController::class, 'getRecommendations']);
@@ -39,4 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/meal-plan', [\App\Http\Controllers\Api\MealPlanController::class, 'generate']);
     Route::get('/meals', [\App\Http\Controllers\Api\MealController::class, 'index']);
     Route::post('/meals', [\App\Http\Controllers\Api\MealController::class, 'store']);
+
+
+    Route::get('/ingredients', [IngredientController::class, 'index']);
+    Route::post('/ingredients', [\App\Http\Controllers\Api\IngredientController::class, 'store']);
 });
