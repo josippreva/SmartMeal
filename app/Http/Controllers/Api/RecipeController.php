@@ -11,36 +11,40 @@ class RecipeController extends Controller
     // GET /api/recipes
     public function index(Request $request)
 {
-    $query = Recipe::with('ingredients'); // Uvijek učitavamo sastojke
+    $query = Recipe::with('ingredients');
 
-    // Filtriranje po kalorijama
-    if ($request->has('min_calories')) {
+    //  kalorije
+    if ($request->filled('min_calories')) {
         $query->where('calories', '>=', $request->min_calories);
     }
-    if ($request->has('max_calories')) {
+
+    if ($request->filled('max_calories')) {
         $query->where('calories', '<=', $request->max_calories);
     }
 
-    // Filtriranje po vrsti obroka (ako postoji meal_type u bazi)
-    if ($request->has('meal_type')) {
-        $query->where('meal_type', $request->meal_type);
+    // vrijeme pripreme
+    if ($request->filled('prep_time_max')) {
+        $query->where('prep_time', '<=', $request->prep_time_max);
     }
 
-    // Filtriranje po sastojcima (ingredient_ids ili imena)
-    if ($request->has('ingredients')) {
+    if ($request->filled('prep_time_min')) {
+        $query->where('prep_time', '>=', $request->prep_time_min);
+    }
+
+    //  filtriranje po sastojcima (ID-jevi)
+    if ($request->filled('ingredients')) {
         $ingredients = $request->ingredients;
+
         if (is_string($ingredients)) {
             $ingredients = explode(',', $ingredients);
         }
 
-        $query->whereHas('ingredients', function($q) use ($ingredients) {
-            $q->whereIn('id', $ingredients); // koristi ID-eve za preciznije filtriranje
+        $query->whereHas('ingredients', function ($q) use ($ingredients) {
+            $q->whereIn('ingredients.id', $ingredients);
         });
     }
 
-    $recipes = $query->get();
-
-    return response()->json($recipes);
+    return response()->json($query->get());
 }
 
     // GET /api/recipes/{id}
