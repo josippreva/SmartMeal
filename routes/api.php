@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\RecipeIngredientController;
-
+use App\Http\Controllers\Api\AnalyticsController;
 
 // --- Javne rute ---
 Route::get('/recipes', [RecipeController::class, 'index']);
@@ -69,4 +69,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/ingredients', [IngredientController::class, 'index']);
     Route::post('/ingredients', [\App\Http\Controllers\Api\IngredientController::class, 'store']);
+});
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/analytics/daily', [AnalyticsController::class, 'daily']);
+    Route::get('/analytics/weekly', [AnalyticsController::class, 'weekly']);
+    Route::get('/analytics/monthly', [AnalyticsController::class, 'monthly']);
+    Route::get('/analytics/all-time', [AnalyticsController::class, 'allTime']);
+    
+
 });

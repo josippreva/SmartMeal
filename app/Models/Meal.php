@@ -8,6 +8,10 @@ class Meal extends Model
 {
     protected $fillable = ['user_id', 'recipe_id', 'date', 'meal_type'];
 
+    protected $casts = [
+    'date' => 'date',
+];
+
     public function user()
     {
         return $this->belongsTo(User::class);
