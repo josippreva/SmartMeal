@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\RecipeIngredientController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\AIController;
 
 // --- Javne rute ---
 Route::get('/recipes', [RecipeController::class, 'index']);
@@ -81,3 +82,5 @@ Route::middleware('auth:sanctum')->group(function () {
     
 
 });
+
+Route::post('/ai/recommend', [AIController::class, 'recommend']);
