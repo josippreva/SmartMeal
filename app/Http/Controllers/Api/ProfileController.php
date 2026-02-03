@@ -13,22 +13,25 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $data = $request->validate([
-            'name' => 'nullable|string',
-            'goal' => 'nullable|string',
-            'preferences' => 'nullable|array',
+            'name' => 'nullable|string|max:255',
+            'goal' => 'nullable|in:weight_loss,maintenance,muscle_gain',
         ]);
 
         $user = $request->user();
-        $user->update($data);
+
+        // update samo polja koja postoje u requestu
+        if (array_key_exists('name', $data)) $user->name = $data['name'];
+        if (array_key_exists('goal', $data)) $user->goal = $data['goal'];
+
+        $user->save();
 
         return response()->json([
-            'message' => 'Profile updated',
+            'message' => 'Profil je uspješno ažuriran.',
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'goal' => $user->goal,
-                'preferences' => $user->preferences,
             ]
         ]);
     }
@@ -45,7 +48,6 @@ class ProfileController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'goal' => $user->goal,
-            'preferences' => $user->preferences,
         ]);
     }
 }

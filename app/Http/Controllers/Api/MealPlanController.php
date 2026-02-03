@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Meal;      // ✅ DODANO: import Meal modela
+use App\Models\Meal;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
 
@@ -14,43 +14,74 @@ class MealPlanController extends Controller
     {
         $request->validate([
             'date' => 'required|date',
-            'goal' => 'nullable|string',         // npr. "weight_loss", "maintenance", "muscle_gain"
-            'preferences' => 'nullable|array',   // npr. ["vegetarian", "gluten_free"]
+            'goal' => 'nullable|string',
+            'preferences' => 'nullable|array',
         ]);
 
-        // ✅ ako nema login/auth, $request->user() može biti null -> bacit ćemo 401
+        // auth:sanctum već štiti rutu, ali ostavimo sigurnosno
         if (!$request->user()) {
             return response()->json([
-                'message' => 'Unauthenticated. You must be logged in to generate a meal plan.'
+                'message' => 'Neautorizirano. Morate biti prijavljeni.'
             ], 401);
         }
 
-        $recipes = Recipe::inRandomOrder()->take(3)->get();
+        $userId = $request->user()->id;
+        $date = $request->input('date');
 
+        // ✅ BLOKIRAJ GENERIRANJE ako već postoji barem jedan obrok za taj datum
+        $alreadyHasMealsForDate = Meal::where('user_id', $userId)
+            ->whereDate('date', $date)
+            ->exists();
+
+        if ($alreadyHasMealsForDate) {
+            return response()->json([
+                'message' => 'Za odabrani datum već imate dodan obrok u "Moji obroci". Obrišite ga ili odaberite drugi datum.'
+            ], 409);
+        }
+
+        // ✅ UZMI SAMO RECEPTE ULOGIRANOG KORISNIKA
+        $recipes = Recipe::where('user_id', $userId)
+            ->inRandomOrder()
+            ->take(3)
+            ->get();
+
+        // ✅ ako korisnik nema dovoljno recepata
+        if ($recipes->count() < 3) {
+            return response()->json([
+                'message' => 'Nemate dovoljno recepata za generiranje plana (potrebno je barem 3 recepta).'
+            ], 422);
+        }
+
+        $mealTypes = ['doručak', 'ručak', 'večera'];
         $meals = [];
 
         foreach ($recipes as $index => $recipe) {
-            // Odredimo tip obroka: doručak, ručak, večera
-            $meal_type = match ($index) {
-                0 => 'doručak',
-                1 => 'ručak',
-                2 => 'večera',
-                default => 'obrok',
-            };
+            $meal_type = $mealTypes[$index] ?? 'obrok';
 
-            // Spremamo u meals tablicu
+            // ✅ dodatna zaštita (ako ikad budeš generirala više puta istog dana)
+            $exists = Meal::where('user_id', $userId)
+                ->whereDate('date', $date)
+                ->where('meal_type', $meal_type)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' => "Već postoji {$meal_type} za odabrani datum."
+                ], 409);
+            }
+
             $meal = Meal::create([
-                'user_id'   => $request->user()->id,
+                'user_id'   => $userId,
                 'recipe_id' => $recipe->id,
-                'date'      => $request->input('date'),
+                'date'      => $date,
                 'meal_type' => $meal_type,
-            ]);
+            ])->load('recipe'); // ✅ da frontend dobije meal.recipe.name
 
             $meals[] = $meal;
         }
 
         return response()->json([
-            'date'  => $request->input('date'),
+            'date'  => $date,
             'meals' => $meals,
         ], 201);
     }
