@@ -1,47 +1,61 @@
 <?php
 
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Meal;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class RecommendationController extends Controller
 {
     // POST /api/recommendations
     public function getRecommendations(Request $request)
     {
-       $request->validate([
-        'goal' => 'nullable|string',
-        'preferences' => 'nullable|array',
-    ]);
+        $request->validate([
+            'goal' => 'nullable|in:weight_loss,maintenance,muscle_gain',
+        ]);
 
-    $query = Recipe::query();
+        $user = $request->user();
+        $userId = $user->id;
 
-    //  Goal logika
-    if ($request->goal === 'weight_loss') {
-        $query->where('calories', '<=', 400);
-    }
+        // ✅ UZMI GOAL: ako nije poslan u requestu -> uzmi iz profila
+        $goal = $request->input('goal', $user->goal);
 
-    if ($request->goal === 'muscle_gain') {
-        $query->where('protein', '>=', 30);
-    }
+        // ✅ samo recepti ulogiranog korisnika
+        $query = Recipe::where('user_id', $userId);
 
-    // (maintenance = bez filtera)
-    $eatenToday = $request->user()
-    ->meals()
-    ->whereDate('date', now()->toDateString())
-    ->pluck('recipe_id');
+        // ✅ izbaci recepte koje je korisnik već jeo danas
+        $today = Carbon::today()->toDateString();
 
-    $query->whereNotIn('id', $eatenToday);
+        $eatenToday = Meal::where('user_id', $userId)
+            ->whereDate('date', $today)
+            ->pluck('recipe_id');
 
-    $recipes = $query->inRandomOrder()->take(3)->get();
+        if ($eatenToday->count() > 0) {
+            $query->whereNotIn('id', $eatenToday);
+        }
 
-    return response()->json([
-        'goal' => $request->goal,
-        'preferences' => $request->preferences,
-        'recommendations' => $recipes,
-    ]);
+        // ✅ logika cilja
+        if ($goal === 'weight_loss') {
+            // mršanje: manje kalorija
+            $query->orderBy('calories', 'asc')
+                  ->orderBy('protein', 'desc');
+        } elseif ($goal === 'muscle_gain') {
+            // masa: više proteina
+            $query->orderBy('protein', 'desc')
+                  ->orderBy('calories', 'desc');
+        } else {
+            // maintenance ili prazno: random
+            $query->inRandomOrder();
+        }
+
+        $recipes = $query->take(3)->get();
+
+        return response()->json([
+            'goal' => $goal,
+            'recommendations' => $recipes,
+        ]);
     }
 }

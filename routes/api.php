@@ -22,10 +22,6 @@ use App\Http\Controllers\AIController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Recepti (samo pregled)
-Route::get('/recipes', [RecipeController::class, 'index']);
-Route::get('/recipes/{id}', [RecipeController::class, 'show']);
-
 // AI preporuke (ako treba biti javno)
 Route::post('/ai/recommend', [AIController::class, 'recommend']);
 
@@ -43,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profil korisnika
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+
+    Route::get('/recipes', [RecipeController::class, 'index']);
+    Route::get('/recipes/{id}', [RecipeController::class, 'show']);
 
     // CRUD za recepte (SAMO vlasnik može edit/delete – logika u controlleru/policy)
     Route::post('/recipes', [RecipeController::class, 'store']);
@@ -62,6 +61,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/meal-plan', [MealPlanController::class, 'generate']);
     Route::get('/meals', [MealController::class, 'index']);
     Route::post('/meals', [MealController::class, 'store']);
+    Route::put('/meals/{meal}', [MealController::class, 'update']);
+    Route::delete('/meals/{meal}', [MealController::class, 'destroy']);
 
     // Preporuke
     Route::post('/recommendations', [RecommendationController::class, 'getRecommendations']);
