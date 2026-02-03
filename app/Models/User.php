@@ -52,16 +52,14 @@ class User extends Authenticatable
     }
 
     public function recipes()
-{
-    return $this->belongsToMany(Recipe::class, 'user_recipe')
-                ->withPivot('date', 'meal_type')
-                ->withTimestamps();
-}
+    {
+        return $this->hasMany(Recipe::class);
+    }
 
 
 
-public function meals()
-{
-    return $this->hasMany(Meal::class);
-}
+    public function meals()
+    {
+        return $this->hasMany(Meal::class);
+    }
 }

@@ -7,9 +7,13 @@ use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
+    /**
+     * Update profile
+     */
     public function update(Request $request)
     {
         $data = $request->validate([
+            'name' => 'nullable|string',
             'goal' => 'nullable|string',
             'preferences' => 'nullable|array',
         ]);
@@ -19,7 +23,29 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated',
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'goal' => $user->goal,
+                'preferences' => $user->preferences,
+            ]
+        ]);
+    }
+
+    /**
+     * Get current user profile
+     */
+    public function show(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'goal' => $user->goal,
+            'preferences' => $user->preferences,
         ]);
     }
 }
