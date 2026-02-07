@@ -8,6 +8,7 @@ class Recipe extends Model
 {
     protected $fillable = [
         'name',
+        'instructions',  
         'calories',
         'protein',
         'carbs',
@@ -16,13 +17,12 @@ class Recipe extends Model
         'user_id',
     ];
 
-    // AUTOR RECEPTA
+    
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // SASTOJCI
     public function ingredients()
     {
         return $this->belongsToMany(Ingredient::class, 'ingredient_recipe')
