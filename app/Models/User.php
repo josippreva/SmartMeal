@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'goal',
         'preferences',
+        'allergies'
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'preferences' => 'array',
+            'allergies' => 'array',
         ];
     }
 
