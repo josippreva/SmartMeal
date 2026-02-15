@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\MealController;
 use App\Http\Controllers\Api\MealPlanController;
 use App\Http\Controllers\AIController;
-
+use App\Http\Controllers\Api\DashboardController;
 /*
 |--------------------------------------------------------------------------
 | JAVNE RUTE
@@ -72,4 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/analytics/weekly', [AnalyticsController::class, 'weekly']);
     Route::get('/analytics/monthly', [AnalyticsController::class, 'monthly']);
     Route::get('/analytics/all-time', [AnalyticsController::class, 'allTime']);
+
+
+     Route::get('/dashboard', [DashboardController::class, 'index']);
+    
+
 });
