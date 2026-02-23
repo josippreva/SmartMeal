@@ -20,11 +20,18 @@ class RecipeIngredientController extends Controller
         $this->ensureOwner($request, $recipe);
 
         $data = $request->validate([
-            'ingredient_ids' => 'required|array',
-            'ingredient_ids.*' => 'exists:ingredients,id'
+            'ingredients' => 'required|array',
+            'ingredients.*.id' => 'required|exists:ingredients,id',
+            'ingredients.*.quantity' => 'required|numeric|min:0',
         ]);
 
-        $recipe->ingredients()->syncWithoutDetaching($data['ingredient_ids']);
+        $syncData = [];
+        foreach ($data['ingredients'] as $ing) {
+            $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
+        }
+
+        $recipe->ingredients()->syncWithoutDetaching($syncData);
+        $recipe->recalculateAndSaveNutrients();
 
         return response()->json([
             'message' => 'Ingredients attached',
@@ -37,11 +44,18 @@ class RecipeIngredientController extends Controller
         $this->ensureOwner($request, $recipe);
 
         $data = $request->validate([
-            'ingredient_ids' => 'required|array',
-            'ingredient_ids.*' => 'exists:ingredients,id'
+            'ingredients' => 'required|array',
+            'ingredients.*.id' => 'required|exists:ingredients,id',
+            'ingredients.*.quantity' => 'required|numeric|min:0',
         ]);
 
-        $recipe->ingredients()->sync($data['ingredient_ids']);
+        $syncData = [];
+        foreach ($data['ingredients'] as $ing) {
+            $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
+        }
+
+        $recipe->ingredients()->sync($syncData);
+        $recipe->recalculateAndSaveNutrients();
 
         return response()->json([
             'message' => 'Ingredients synced successfully',
@@ -59,6 +73,7 @@ class RecipeIngredientController extends Controller
         ]);
 
         $recipe->ingredients()->detach($data['ingredient_ids']);
+        $recipe->recalculateAndSaveNutrients();
 
         return response()->json([
             'message' => 'Ingredients detached',
