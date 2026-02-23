@@ -64,25 +64,32 @@ class RecipeController extends Controller
         $validated = $request->validate([
             'name'         => 'required|string|max:255',
             'instructions' => 'nullable|string', 
-            'calories'     => 'required|integer|min:0',
-            'protein'      => 'required|numeric|min:0',
-            'carbs'        => 'required|numeric|min:0',
-            'fat'          => 'required|numeric|min:0',
             'prep_time'    => 'required|integer|min:0',
-            'ingredient_ids'   => 'sometimes|array',
-            'ingredient_ids.*' => 'exists:ingredients,id',
+            'ingredients'  => 'sometimes|array',
+            'ingredients.*.id' => 'required|exists:ingredients,id',
+            'ingredients.*.quantity' => 'required|numeric|min:0',
         ]);
 
-        $validated['user_id'] = $request->user()->id;
+        $ingredientsData = $validated['ingredients'] ?? [];
+        unset($validated['ingredients']);
 
-        $ingredientIds = $validated['ingredient_ids'] ?? [];
-        unset($validated['ingredient_ids']);
+        $validated['user_id'] = $request->user()->id;
+        $validated['calories'] = 0;
+        $validated['protein']  = 0;
+        $validated['carbs']    = 0;
+        $validated['fat']      = 0;
 
         $recipe = Recipe::create($validated);
 
-        if (!empty($ingredientIds)) {
-            $recipe->ingredients()->sync($ingredientIds);
+        $syncData = [];
+        foreach ($ingredientsData as $ing) {
+            $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
         }
+        if (!empty($syncData)) {
+            $recipe->ingredients()->sync($syncData);
+        }
+
+        $recipe->recalculateAndSaveNutrients();
 
         return response()->json($recipe->load('ingredients'), 201);
     }
@@ -96,16 +103,28 @@ class RecipeController extends Controller
         }
 
         $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'instructions' => 'nullable|string', 
-            'calories'     => 'required|integer|min:0',
-            'protein'      => 'required|numeric|min:0',
-            'carbs'        => 'required|numeric|min:0',
-            'fat'          => 'required|numeric|min:0',
-            'prep_time'    => 'required|integer|min:0',
+            'name'                   => 'required|string|max:255',
+            'instructions'           => 'nullable|string',
+            'prep_time'              => 'required|integer|min:0',
+            'ingredients'            => 'sometimes|array',
+            'ingredients.*.id'       => 'required|exists:ingredients,id',
+            'ingredients.*.quantity' => 'required|numeric|min:0',
         ]);
 
+        $ingredientsData = $validated['ingredients'] ?? [];
+        unset($validated['ingredients']);
+
         $recipe->update($validated);
+
+        if (!empty($ingredientsData)) {
+            $syncData = [];
+            foreach ($ingredientsData as $ing) {
+                $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
+            }
+            $recipe->ingredients()->sync($syncData);
+        }
+
+        $recipe->recalculateAndSaveNutrients();
 
         return response()->json($recipe->load('ingredients'));
     }

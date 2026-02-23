@@ -18,8 +18,14 @@ class IngredientController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|unique:ingredients,name'
-        ]);
+            'name'       => 'required|string|unique:ingredients,name',
+            'unit'       => 'required|in:g,ml',
+            'ref_amount' => 'required|numeric|min:1',
+            'calories'   => 'required|numeric|min:0',
+            'protein'    => 'required|numeric|min:0',
+            'carbs'      => 'required|numeric|min:0',
+            'fat'        => 'required|numeric|min:0',
+        ]); 
 
         return Ingredient::create($data);
     }
